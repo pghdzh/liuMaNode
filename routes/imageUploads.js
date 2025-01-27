@@ -31,11 +31,19 @@ router.post('/upload', upload.single('image'), async (req, res) => {
 // 获取图片列表
 router.get('/', async (req, res) => {
     try {
-        const { page = 1, pageSize = 10 } = req.query;
+        const { page = 1, pageSize = 10, sortBy = 'upload_time', order = 'DESC' } = req.query;
         const offset = (page - 1) * pageSize;
+        console.log('req.query;',req.query);
+        // 验证排序字段是否合法，防止 SQL 注入
+        const validSortBy = ['upload_time', 'likes']; // 允许的排序字段
+        const validOrder = ['ASC', 'DESC']; // 允许的排序方向
+
+        if (!validSortBy.includes(sortBy) || !validOrder.includes(order.toUpperCase())) {
+            return res.status(400).json({ error: 'Invalid sortBy or order parameter' });
+        }
 
         const images = await Image.findAll({
-            order: [['upload_time', 'DESC']],
+            order: [[sortBy, order.toUpperCase()]], // 动态设置排序字段和方向
             limit: parseInt(pageSize),
             offset: offset
         });
@@ -46,6 +54,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch images' });
     }
 });
+
 
 // 点赞图片
 router.post('/:id/like', async (req, res) => {

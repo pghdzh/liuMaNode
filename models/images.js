@@ -21,8 +21,8 @@ const Image = sequelize.define('Image', {
     defaultValue: 0
   },
   status: {
-    type: DataTypes.ENUM('active', 'inactive'),
-    defaultValue: 'active'
+    type: DataTypes.ENUM('待打印', '待做'),
+    defaultValue: '待打印'
   },
   description: {
     type: DataTypes.TEXT,
