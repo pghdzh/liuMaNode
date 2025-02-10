@@ -1,6 +1,7 @@
 const express = require("express");
 const sequelize = require("./config/db");
 const imageUploadsRouter = require("./routes/imageUploads");
+const liumaMediaRoutes = require('./routes/liumaMedia');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,10 +15,12 @@ app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 路由
 app.use("/api/images", imageUploadsRouter);
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something went wrong!');
-});
+app.use('/api/liuma-media', liumaMediaRoutes);
+
+// app.use((err, req, res, next) => {
+//     console.error(err.stack);
+//     res.status(500).send('Something went wrong!');
+// });
 // 数据库连接和服务器启动
 sequelize
     .sync({ force: false }) // 确保数据库表已同步
