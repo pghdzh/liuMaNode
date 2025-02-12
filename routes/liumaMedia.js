@@ -72,13 +72,13 @@ router.get('/', async (req, res) => {
         const { sortBy = 'created_at', order = 'DESC', page = 1, pageSize = 10 } = req.query;
         const offset = (page - 1) * pageSize;
 
-        const mediaList = await LiumaMedia.findAll({
+        const { count, rows }  = await LiumaMedia.findAndCountAll({
             order: [[sortBy, order.toUpperCase()]],
             limit: parseInt(pageSize),
             offset: offset
         });
 
-        res.json({ media: mediaList });
+        res.json({ total: count, media: rows, });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: '获取图片失败' });
@@ -114,7 +114,7 @@ router.put('/:id', async (req, res) => {
             video_url: video_url || media.video_url
         });
 
-        res.json({ message: '图片信息更新成功！', media });
+        res.json({ message: '图片信息更新成功！', media, code: 200 });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: '更新图片信息失败' });
@@ -130,11 +130,20 @@ router.delete('/:id', async (req, res) => {
         }
 
         await media.destroy();
-        res.json({ message: '图片删除成功！' });
+        res.json({ message: '图片删除成功！', code: 200 });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: '删除图片失败' });
     }
 });
-
+// 📌 删除全部流麻图片 API
+router.delete("/deleteAll", async (req, res) => {
+    try {
+        await LiumaMedia.destroy({ where: {} }); // 清空表
+        res.json({ message: "所有流麻数据已删除！", code: 200 });
+    } catch (error) {
+        console.error("删除流麻数据失败:", error);
+        res.status(500).json({ error: "删除失败" });
+    }
+});
 module.exports = router;
