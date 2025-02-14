@@ -3,6 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const { AIGeneratedImage } = require('../models'); // 导入 Image 模型
 const router = express.Router();
+const { Sequelize } = require("sequelize");
+
 // 配置 multer 存储到 uploads/aiImg
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -52,28 +54,38 @@ router.post("/", async (req, res) => {
 /** ✅ 2. 获取所有 AI 生成的图片 */
 router.get("/", async (req, res) => {
   try {
-    const { sortBy = 'updated_at', order = 'DESC', page = 1, pageSize = 10 } = req.query;
+    const { sortBy = 'updated_at', order = 'DESC', page = 1, pageSize = 10, search = '' } = req.query;
     const offset = (page - 1) * pageSize;
 
     const validSortBy = ['updated_at', 'likes']; // 允许的排序字段
     const validOrder = ['ASC', 'DESC']; // 允许的排序方向
 
+    // 验证参数是否合法
     if (!validSortBy.includes(sortBy) || !validOrder.includes(order.toUpperCase())) {
       return res.status(400).json({ error: 'Invalid sortBy or order parameter' });
     }
+
+    // 如果有 search 参数，过滤图像名称
+    const whereCondition = search ? {
+      image_name: {
+        [Sequelize.Op.like]: `%${search}%`, // 使用 LIKE 来模糊搜索
+      }
+    } : {};
+
     const { count, rows } = await AIGeneratedImage.findAndCountAll({
-      order: [[sortBy, order.toUpperCase()]],
-      limit: parseInt(pageSize),
-      offset: offset
+      where: whereCondition, // 添加过滤条件
+      order: [[sortBy, order.toUpperCase()]], // 排序
+      limit: parseInt(pageSize), // 每页的数量
+      offset: offset, // 偏移量
     });
 
-
-    res.json({ data: rows, code: 200, total: count, });
+    res.json({ data: rows, code: 200, total: count });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "获取失败" });
   }
 });
+
 
 /** ✅ 3. 更新图片信息 */
 router.put("/:id", async (req, res) => {
