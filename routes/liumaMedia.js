@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const { LiumaMedia } = require('../models'); // 导入 Image 模型
 const router = express.Router();
+const fs = require('fs').promises; // 使用 fs.promises 来避免回调地狱
 
 // 设置 Multer 存储位置
 const storage = multer.diskStorage({
@@ -72,7 +73,7 @@ router.get('/', async (req, res) => {
         const { sortBy = 'created_at', order = 'DESC', page = 1, pageSize = 10 } = req.query;
         const offset = (page - 1) * pageSize;
 
-        const { count, rows }  = await LiumaMedia.findAndCountAll({
+        const { count, rows } = await LiumaMedia.findAndCountAll({
             order: [[sortBy, order.toUpperCase()]],
             limit: parseInt(pageSize),
             offset: offset
@@ -121,6 +122,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+
 // 📌 删除流麻图片 API
 router.delete('/:id', async (req, res) => {
     try {
@@ -129,16 +131,47 @@ router.delete('/:id', async (req, res) => {
             return res.status(404).json({ error: '图片未找到' });
         }
 
-        await media.destroy();
-        res.json({ message: '图片删除成功！', code: 200 });
+        // 获取图片文件的路径
+        const imagePath = path.join("uploads", "liumaImg", path.basename(media.image_url));
+
+        // 删除文件
+        try {
+            await fs.unlink(imagePath); // 使用 fs.promises.unlink 来简化删除操作
+        } catch (err) {
+            console.error("删除图片文件失败", err);
+            return res.status(500).json({ error: "删除图片文件失败" });
+        }
+
+        // 删除数据库记录
+        try {
+            await media.destroy(); // 删除数据库记录
+            res.json({ message: "删除成功", code: 200 });
+        } catch (dbError) {
+            console.error("删除数据库记录失败", dbError);
+            res.status(500).json({ error: "删除数据库记录失败" });
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: '删除图片失败' });
     }
 });
+
 // 📌 删除全部流麻图片 API
 router.delete("/deleteAll", async (req, res) => {
     try {
+        // 获取所有图片记录
+        const images = await LiumaMedia.findAll();
+
+        // 删除所有图片的文件
+        const deleteFilesPromises = images.map((image) => {
+            const imagePath = path.join("uploads", "liumaImg", path.basename(image.image_url));
+            return fs.unlink(imagePath); // 使用 fs.promises.unlink 来删除文件
+        });
+
+        // 等待所有文件删除完成
+        await Promise.all(deleteFilesPromises);
+
+        // 删除所有数据库记录
         await LiumaMedia.destroy({ where: {} }); // 清空表
         res.json({ message: "所有流麻数据已删除！", code: 200 });
     } catch (error) {
@@ -146,4 +179,5 @@ router.delete("/deleteAll", async (req, res) => {
         res.status(500).json({ error: "删除失败" });
     }
 });
+
 module.exports = router;

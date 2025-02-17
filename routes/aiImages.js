@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs').promises; // 使用 fs.promises 来避免回调地狱
 const { AIGeneratedImage } = require('../models'); // 导入 Image 模型
 const router = express.Router();
 const { Sequelize } = require("sequelize");
@@ -108,15 +109,24 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-/** ✅ 4. 删除单个图片记录 */
+// 删除单个图片记录并删除图片文件
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
+    // 查找图片记录
     const image = await AIGeneratedImage.findByPk(id);
     if (!image) return res.status(404).json({ error: "图片不存在" });
 
+    // 获取图片文件的路径
+    const imagePath = path.join("uploads", "aiImg", path.basename(image.image_path));
+
+    // 删除文件
+    await fs.unlink(imagePath); // 使用 await 等待删除文件完成
+
+    // 删除数据库记录
     await image.destroy();
+
     res.json({ message: "删除成功", code: 200 });
   } catch (error) {
     console.error(error);
@@ -127,13 +137,32 @@ router.delete("/:id", async (req, res) => {
 /** ✅ 5. 删除所有图片 */
 router.delete("/", async (req, res) => {
   try {
+    // 获取所有图片记录
+    const images = await AIGeneratedImage.findAll();
+
+    // 使用 Promise.all 等待所有文件删除完成
+    await Promise.all(images.map(async (image) => {
+      const imagePath = path.join("uploads", "aiImg", path.basename(image.image_path));
+      
+      // 删除文件
+      try {
+        await fs.unlink(imagePath);
+      } catch (err) {
+        console.error(`删除图片文件失败 ${image.image_path}`, err);
+      }
+    }));
+
+    // 删除所有数据库记录
     await AIGeneratedImage.destroy({ where: {} });
+
     res.json({ message: "所有 AI 生成的图片已删除", code: 200 });
   } catch (error) {
-    console.error(error);
+    console.error("删除流麻数据失败:", error);
     res.status(500).json({ error: "删除失败" });
   }
 });
+
+
 
 /** ✅6.点赞 */
 router.post('/:id/like', async (req, res) => {
