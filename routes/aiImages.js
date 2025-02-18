@@ -18,6 +18,33 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// 批量创建图片记录接口
+router.post("/createImagesMultiple", async (req, res) => {
+  try {
+    const { image_name, image_path, description, orientation } = req.body;
+
+    if (!image_name || !image_path) {
+      return res.status(400).json({ error: "图片名称和路径不能为空" });
+    }
+
+    // 批量保存每个图片的记录
+    const records = await Promise.all(image_path.map(image =>
+      AIGeneratedImage.create({
+        image_name,
+        image_path: image, // 使用正确的路径保存
+        description,
+        orientation,
+      })
+    ));
+
+    res.status(201).json({ message: "图片记录创建成功", data: records, code: 200 });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "创建失败" });
+  }
+});
+
+
 // 上传图片接口
 router.post("/upload-ai-image", upload.single("image"), (req, res) => {
   if (!req.file) {
@@ -143,8 +170,8 @@ router.delete("/", async (req, res) => {
     // 使用 Promise.all 等待所有文件删除完成
     await Promise.all(images.map(async (image) => {
       const imagePath = path.join("uploads", "aiImg", path.basename(image.image_path));
-      
-      // 删除文件
+
+      // 删除文件     
       try {
         await fs.unlink(imagePath);
       } catch (err) {
@@ -157,7 +184,7 @@ router.delete("/", async (req, res) => {
 
     res.json({ message: "所有 AI 生成的图片已删除", code: 200 });
   } catch (error) {
-    console.error("删除流麻数据失败:", error);
+    console.error("删除数据失败:", error);
     res.status(500).json({ error: "删除失败" });
   }
 });
