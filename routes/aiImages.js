@@ -18,6 +18,22 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// 批量上传图片接口
+router.post("/upload-ai-images", upload.array("images", 50), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: "请上传图片" });
+  }
+
+  // 获取所有上传的图片路径
+  const imagePaths = req.files.map(file => `/uploads/aiImg/${file.filename}`);  // 返回文件的相对路径
+
+  // 返回上传成功的图片路径
+  res.json({
+    message: "图片上传成功",
+    imagePaths,  // 返回图片路径数组
+  });
+});
+
 // 批量创建图片记录接口
 router.post("/createImagesMultiple", async (req, res) => {
   try {
