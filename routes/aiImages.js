@@ -98,10 +98,10 @@ router.post("/", async (req, res) => {
 /** ✅ 2. 获取所有 AI 生成的图片 */
 router.get("/", async (req, res) => {
   try {
-    const { sortBy = 'updated_at', order = 'DESC', page = 1, pageSize = 10, search = '' } = req.query;
+    const { sortBy = 'created_at', order = 'DESC', page = 1, pageSize = 10, search = '' } = req.query;
     const offset = (page - 1) * pageSize;
 
-    const validSortBy = ['updated_at', 'likes']; // 允许的排序字段
+    const validSortBy = ['created_at', 'likes']; // 允许的排序字段
     const validOrder = ['ASC', 'DESC']; // 允许的排序方向
 
     // 验证参数是否合法
