@@ -3,6 +3,7 @@ const sequelize = require("./config/db");
 const imageUploadsRouter = require("./routes/imageUploads");
 const liumaMediaRoutes = require('./routes/liumaMedia');
 const aiImagesRoutes = require('./routes/aiImages')
+const luckyDrawRoutes = require('./routes/luckDrawRoute')
 const app = express();
 const PORT = process.env.PORT || 3000;
 const cors = require("cors");
@@ -17,6 +18,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/images", imageUploadsRouter);
 app.use('/api/liuma-media', liumaMediaRoutes);
 app.use('/api/aiImages', aiImagesRoutes)
+app.use('/api/luckyDraw', luckyDrawRoutes)
 // app.use((err, req, res, next) => {
 //     console.error(err.stack);
 //     res.status(500).send('Something went wrong!');
