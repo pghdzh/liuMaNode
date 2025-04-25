@@ -4,6 +4,7 @@ const imageUploadsRouter = require("./routes/imageUploads");
 const liumaMediaRoutes = require('./routes/liumaMedia');
 const aiImagesRoutes = require('./routes/aiImages')
 const luckyDrawRoutes = require('./routes/luckDrawRoute')
+const YeQiMessageRoutes = require('./routes/YeQiMessageRoute')
 const app = express();
 const PORT = process.env.PORT || 3000;
 const cors = require("cors");
@@ -19,6 +20,7 @@ app.use("/api/images", imageUploadsRouter);
 app.use('/api/liuma-media', liumaMediaRoutes);
 app.use('/api/aiImages', aiImagesRoutes)
 app.use('/api/luckyDraw', luckyDrawRoutes)
+app.use('/api/YeQiMessage', YeQiMessageRoutes)
 // app.use((err, req, res, next) => {
 //     console.error(err.stack);
 //     res.status(500).send('Something went wrong!');

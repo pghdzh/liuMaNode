@@ -5,6 +5,7 @@ const Image = require("./Images");
 const LiumaMedia = require('./liumaMedia')
 const AIGeneratedImage = require('./AIGeneratedImage')
 const luckyDraw = require("./luckyDraw")
+const YeQiMessage = require("./YeQiMessage")
 // 导出所有模型
 module.exports = {
   sequelize,
@@ -12,4 +13,5 @@ module.exports = {
   LiumaMedia,
   AIGeneratedImage,
   luckyDraw,
+  YeQiMessage,
 };
